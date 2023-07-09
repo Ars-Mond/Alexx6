@@ -1,15 +1,19 @@
 {
-  "name": "alex6-1",
-  "version": "1.0.0",
+  "name": "alexx6-tg-bot",
+  "version": "2.0.0",
   "description": "",
   "main": "dist/src/index.js",
   "scripts": {
-    "JS:start": "node .",
-    "TS:start": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json && node ."
+    "App:start": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json && node .",
+    "App:build": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Ars_Mond",
+  "license": "GPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ars-Mond/Alexx6"
+  },
   "dependencies": {
     "@types/node": "^20.4.1",
     "@types/node-telegram-bot-api": "^0.61.6",
