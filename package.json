@@ -2,16 +2,23 @@
   "name": "alex6-1",
   "version": "1.0.0",
   "description": "",
-  "type": "module",
-  "main": "index.js",
+  "main": "dist/src/index.js",
   "scripts": {
-    "start": "node ."
+    "JS:start": "node .",
+    "TS:start": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json && node ."
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/node": "^20.4.1",
+    "@types/node-telegram-bot-api": "^0.61.6",
+    "@types/ws": "^8.5.5",
     "node-telegram-bot-api": "^0.61.0",
+    "ts-import": "^5.0.0-beta.0",
     "ws": "^8.13.0"
+  },
+  "devDependencies": {
+    "tsc-alias": "^1.8.5"
   }
 }
