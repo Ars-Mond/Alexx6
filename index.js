@@ -84,61 +84,40 @@ function FormatTable(arr, title, level = 0, isArray = false) {
 		return str !== undefined && str !== '' ? str : 'none';
 	}
 
-	function form(char, item, item2) {
+	function form(char, item, item2 = '') {
 
 		let t = '';
-		if (element[1].constructor === Object)
-			t = FormatTable(Object.entries(element[1]), `${r(level, '    ')}└ ${element[0]}:`, level + 1);
-		else if (element[1].constructor === Array) {
-			t = FormatTable(element[1], `${r(level, '    ')}└ ${element[0]}:`, level + 1, true);
-			console.log(element);
+		let s = r(level, '    ');
+
+		switch (item?.constructor) {
+			case Array:
+				t = FormatTable(
+					item,
+					`${s}└ ${item2}:`,
+					level + 1);
+				break;
+
+			case Object:
+				t = FormatTable(
+					Object.entries(item),
+					`${s}└ ${item2}:`,
+					level + 1);
+				break;
+
+			default:
+				t = `${s}${char} ${item2}: \`${item}\`\n`;
+				break;
 		}
-		else
-			t = `${r(level, '    ')}├ ${element[0]}: \`${tap(element[1])}\`\n`;
 		return t;
 	}
 	
-	if (isArray) {
-		for (let element of arr/*.slice(0, -1)*/) {
-			let t = '';
-			if (element.constructor === Object)
-				t = FormatTable(Object.entries(element), `${r(level, '    ')}└──── :`, level + 1);
-			else if (element.constructor === Array)
-				t = FormatTable(element, `${r(level, '    ')}└──── :`, level + 1, true);
-			else
-				t = `${r(level, '    ')}├──── : \`${element}\`\n`;
-			msg += t;
-		}
-	}
-	else {
-		for (let element of arr.slice(0, -1)) {
-			let t = '';
-			if (element[1].constructor === Object)
-				t = FormatTable(Object.entries(element[1]), `${r(level, '    ')}└ ${element[0]}:`, level + 1);
-			else if (element[1].constructor === Array) {
-				t = FormatTable(element[1], `${r(level, '    ')}└ ${element[0]}:`, level + 1, true);
-				console.log(element);
-			}
-			else
-				t = `${r(level, '    ')}├ ${element[0]}: \`${tap(element[1])}\`\n`;
-			msg += t;
-		}
 
-		let last = arr[arr.length - 1];
-		let tt = '';
-		if (last[1].constructor === Object)
-			tt = FormatTable(Object.entries(last[1]),`${r(level, '    ')}└ ${last[0]}:`, level + 1);
-		else if (last[1].constructor === Array) {
-			tt = FormatTable(last[1], `${r(level, '    ')}└ ${last[0]}:`, level + 1, true);
-			console.log(last);
-		}
-		else
-			tt = `${r(level, '    ')}└ ${last[0]}: \`${tap(last[1])}\`\n`;
-		msg += tt;
+	for (let element of arr.slice(0, -1)) {
+		msg += form('├',element[1] ?? element, element[0] ?? '┐');
 	}
 
-
-
+	let last = arr[arr.length - 1];
+	msg += form('└', last[1] ?? last, last[0] ?? '┐');
 	return msg;
 }
 
