@@ -2,10 +2,13 @@
 namespace Storage {
 
 	export type ServerDataType = {
-		name: string,
 		online: number,
 		maxOnline: number,
-		servers: Array<any>
+		servers: Array<{
+			online: number,
+			maxOnline: number
+		}>,
+		version: string;
 	};
 	export const ServerData: Map<string, ServerDataType> = new Map();
 	export class DataStorage<T extends Object> {

@@ -85,7 +85,10 @@ namespace TelegramBotProvider {
 			[{
 				command: '/online',
 				description: 'Получение онлайна серверов.'
-			}]
+			}],
+			{
+				language_code: 'ru'
+			}
 		).then(r => console.info(`Commands load: ${r}`));
 
 		bot.on('message', async (msg) => {
@@ -105,10 +108,10 @@ namespace TelegramBotProvider {
 
 						let servers = Object.entries(element);
 
-						let temp = FormatTable(servers, element.name, 0);
+						let temp = FormatTable(servers, '⚙️' + dataMapElement[0], 0);
 
 
-						serverArrStr.set(element.name, temp);
+						serverArrStr.set(dataMapElement[0], temp);
 					}
 
 					if (t.parameters.length === 0) {
