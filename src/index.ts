@@ -1,52 +1,31 @@
-import WebSocket from 'ws';
 import TelegramBot from 'node-telegram-bot-api';
+import 'dotenv/config'
 
-const ws = new WebSocket('wss://api.loliland.ru/ws');
+import MonitoringProvider from "@/lib/MonitoringProvider";
+import ConfigsProvider from "@/lib/ConfigsProvider";
+import Storage from "@/lib/Storage";
 
-type MServerDataType = {name: string, online: number, max_online: number, servers: Array<any>};
+enum ConfigItem {
+	TelegramToken = 'token',
+	Prefix = 'prefix',
+	UrlMonit = 'url_monit'
+}
 
-const DataMap: Map<string, MServerDataType> = new Map();
+function GetConfigData<T = any>(index: ConfigItem, config: ConfigsProvider.ConfigsList) {
+	return config.data.get(index)?.data as T;
+}
+
+const tokenConfigElement = new ConfigsProvider.ConfigElement<string>(ConfigItem.TelegramToken,'tgToken', "TG_TOKEN");
+const prefixConfigElement = new ConfigsProvider.ConfigElement<string>(ConfigItem.Prefix, 'prefix', 'PREFIX');
+const urlMonitConfigElement = new ConfigsProvider.ConfigElement<string>(ConfigItem.UrlMonit, 'urlMonit', 'URL_MONIT');
+
+const config = new ConfigsProvider.ConfigsList([
+	tokenConfigElement,
+	prefixConfigElement,
+	urlMonitConfigElement
+]);
 
 
-ws.on('error', console.error);
-
-ws.once('open', function open() {
-	setInterval(() => {ws.send('{"packet":"ping","data":{}}')}, 1500);
-});
-
-ws.on('message', function message(data) {
-	try {
-		let a = JSON.parse(data.toString());
-		if(a.packet === 'monitoring') {
-			let entries = Object.entries(a.data.servers);
-			for (const entry of entries) {
-				//console.log(entry);
-				let element = entry[1] as MServerDataType;
-
-				let a = [];
-				for (const el of Object.entries(element.servers)) {
-					a.push(el[1]);
-				}
-
-				DataMap.set(element.name, {
-					name: element.name,
-					online: element.online,
-					max_online: element.max_online,
-					servers: a
-				});
-			}
-		}
-
-	}
-	catch (e) {
-		console.error(e);
-	}
-});
-
-const config = {
-	token: '5804972045:AAGTZ3JMd6zl5eHa0dTsbZ7vfyjGjmELXkg',
-	prefix: '/'
-};
 
 const answer = {
 	info: '*Бот RYA* — для отправки уведомлений о событиях нашей инфроструктуры *RYA*\\!',
@@ -55,7 +34,9 @@ const answer = {
 	notFound: '*Not Found\\.*'
 };
 
-let bot = new TelegramBot(config.token, {polling: true});
+const monit = MonitoringProvider.Listen('wss://api.loliland.ru/ws');
+
+let bot = new TelegramBot(GetConfigData(ConfigItem.TelegramToken, config), {polling: true});
 
 function seeder(str: string) {
 	let split = str.slice(1).split(' ');
@@ -132,7 +113,7 @@ bot.setMyCommands(
 
 bot.on('message', async (msg) => {
 	try {
-		if (!msg.text || !msg.text.startsWith(config.prefix)) {
+		if (!msg.text || !msg.text.startsWith(GetConfigData(ConfigItem.Prefix, config))) {
 			await bot.sendMessage(msg.chat.id, answer.err, {parse_mode: 'MarkdownV2'});
 			return;
 		}
@@ -143,16 +124,15 @@ bot.on('message', async (msg) => {
 		if (t.name === 'online') {
 			let serverArrStr = new Map();
 
-			for (const dataMapElement of DataMap) {
+			for (const dataMapElement of Storage.ServerData) {
 				let element = dataMapElement[1];
 
-				let servers = Object.entries(element); /*Object.values(element.servers);*/
-				//console.log(element.servers.constructor);
+				let servers = Object.entries(element);
 
 				let temp = FormatTable(servers, element.name, 0);
 
 
-				serverArrStr.set(element.name, temp/*`Server: ${element.name}:\n${serverList}`*/);
+				serverArrStr.set(element.name, temp);
 			}
 
 			if (t.parameters.length === 0) {
@@ -161,26 +141,6 @@ bot.on('message', async (msg) => {
 					await bot.sendMessage(msg.chat.id, FormatMarkdownV2(mapElement), {parse_mode: 'MarkdownV2'})
 				}
 			}
-			/*else {
-				let f = [];
-				function c(str, regexp) {
-					let a = str.replace(/([a-z])([A-Z])/g, '$1 $2').split(' ');
-					for (let aEl of a) {
-						if (aEl === regexp) return true;
-					}
-					return false;
-				}
-
-				for (const parameter of t.parameters) {
-					for (const serverArrStrEl of serverArrStr) {
-						if (parameter === serverArrStrEl[0] || c(serverArrStrEl[0], parameter)) f.push(serverArrStrEl[1]);
-					}
-				}
-				if (f.length !== 0)
-					await bot.sendMessage(msg.chat.id, FormatMarkdownV2(f.join('\n')), {parse_mode: 'MarkdownV2'});
-				else
-					await bot.sendMessage(msg.chat.id, answer.notFound, {parse_mode: 'MarkdownV2'});
-			}*/
 
 			return;
 		}
@@ -192,21 +152,3 @@ bot.on('message', async (msg) => {
 		console.error(e);
 	}
 });
-
-/*
-setInterval(() => {
-	for (const dataMapElement of DataMap) {
-		let element = dataMapElement[1];
-
-		let serverList = '';
-		for (const server of element.servers) {
-			serverList += `Nunber: ${server.num} Players count: ${server.online}/${server.max_online}\n`;
-		}
-
-		let msg = `Server: ${element.name}:\n${serverList}`;
-		console.log(msg);
-		/!*let a = "";
-		console.log(element.name)*!/
-	}
-	console.log();
-}, 5000);*/

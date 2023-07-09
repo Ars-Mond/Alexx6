@@ -14,6 +14,7 @@
     "@types/node": "^20.4.1",
     "@types/node-telegram-bot-api": "^0.61.6",
     "@types/ws": "^8.5.5",
+    "dotenv": "^16.3.1",
     "node-telegram-bot-api": "^0.61.0",
     "ts-import": "^5.0.0-beta.0",
     "ws": "^8.13.0"
