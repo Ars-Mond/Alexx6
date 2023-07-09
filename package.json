@@ -4,6 +4,7 @@
   "description": "",
   "main": "dist/src/index.js",
   "scripts": {
+    "App:instal": "npm install",
     "App:start": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json && node .",
     "App:build": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json"
   },
