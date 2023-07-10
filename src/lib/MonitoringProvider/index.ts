@@ -80,12 +80,25 @@ namespace MonitoringProvider {
 					for (const entry of entries) {
 						let element = entry[1];
 
-						let a = Object.values(element.servers).map((item) => { return {online: item.online, maxOnline: item.max_online}});
+						//let a = Object.values(element.servers).map((item) => { return {online: item.online, maxOnline: item.max_online}});
+						let servers: {
+							[key: string]: {
+								online: number,
+								maxOnline: number
+							}
+						} = {};
+
+						for (let value of Object.values(element.servers)) {
+							servers[`#${value.num}`] = {
+								online: value.online,
+								maxOnline: value.max_online
+							};
+						}
 
 						Storage.ServerData.set(element.name, {
 							online: element.online,
 							maxOnline: element.max_online,
-							servers: a,
+							servers: servers,
 							version: element.version
 						});
 					}

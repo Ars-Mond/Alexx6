@@ -1,5 +1,6 @@
 import TelegramBot from 'node-telegram-bot-api';
 import Storage from '@/lib/Storage';
+import Fuse from "fuse.js";
 
 namespace TelegramBotProvider {
 
@@ -17,6 +18,19 @@ namespace TelegramBotProvider {
 			name: split[0],
 			parameters: split.filter((value, index, array) => index !== 0)
 		}
+	}
+
+	function Russifier(str: string) {
+		 const obj = {
+			 online: 'Онлайн',
+			 maxOnline: 'Макс. Онлайн',
+			 servers: 'Сервера',
+			 version: 'Версия',
+			 node: '| пустышка |'
+		 };
+
+		 // @ts-ignore
+		return obj[str] ?? str;
 	}
 
 	function FormatMarkdownV2(rawString: string) {
@@ -40,7 +54,13 @@ namespace TelegramBotProvider {
 			return str !== undefined && str !== '' ? str : 'none';
 		}
 
-		function form(char: string, item: Array<any>, item2 = '') {
+		function line(char: string, placeholder: string, count: number, item: any, item2: any = null) {
+			return item2 != null
+				? r(count, placeholder) + char + ' ' + item + ': \`' + item2 + '\`' //`${s}${char} ${item2}: \`${item}\`\n`;
+				: r(count, placeholder) + char + ' ' + item + ':'
+		}
+
+		function form(char: string, item: any, item2: any = '') {
 
 			let t = '';
 			let s = r(level, '    ');
@@ -49,19 +69,19 @@ namespace TelegramBotProvider {
 				case Array:
 					t = FormatTable(
 						item,
-						`${s}└ ${item2}:`,
+						line('└', '    ', level, Russifier(item2)), // `${s}└ ${Russifier(item2)}:`
 						level + 1);
 					break;
 
 				case Object:
 					t = FormatTable(
 						Object.entries(item),
-						`${s}└ ${item2}:`,
+						line('└', '    ', level, Russifier(item2)), // `${s}└ ${Russifier(item2)}:`
 						level + 1);
 					break;
 
 				default:
-					t = `${s}${char} ${item2}: \`${item}\`\n`;
+					t = line(char, '    ', level, Russifier(item2), item) + '\n'; // t = `${s}${char} ${item2}: \`${item}\`\n`;
 					break;
 			}
 			return t;
@@ -101,29 +121,47 @@ namespace TelegramBotProvider {
 				let t = seeder(msg.text);
 
 				if (t.name === 'online') {
-					let serverArrStr = new Map();
+					let serverArrStr = new Map<string, string>();
+					let list = [];
 
-					for (const dataMapElement of Storage.ServerData) {
-						let element = dataMapElement[1];
+					for (const serverDatum of Storage.ServerData) {
+						let element = serverDatum[1];
+						let name = serverDatum[0];
 
-						let servers = Object.entries(element);
+						 let servers = Object.entries(element);
 
-						let temp = FormatTable(servers, '⚙️' + dataMapElement[0], 0);
+						let result = FormatTable(servers, '⚙️' + serverDatum[0], 0);
 
-
-						serverArrStr.set(dataMapElement[0], temp);
+						list.push({
+							name: name,
+							context: result
+						});
+						serverArrStr.set(name, result);
 					}
 
+					const fuze = new Fuse(list, {
+						keys: ['name'],
+						threshold: 0.3
+					});
+
 					if (t.parameters.length === 0) {
-						let map = Array.from(serverArrStr.values());
-						for (let mapElement of map) {
-							await bot.sendMessage(msg.chat.id, FormatMarkdownV2(mapElement), {parse_mode: 'MarkdownV2'})
+						for (let element of list) {
+							await bot.sendMessage(msg.chat.id, FormatMarkdownV2(element.context), {parse_mode: 'MarkdownV2'})
+						}
+					}
+					else {
+
+						let from = Object.entries(serverArrStr);
+
+						let search = fuze.search(t.parameters.join(' '), { limit: 2 });
+
+						for (let element of search) {
+							await bot.sendMessage(msg.chat.id, FormatMarkdownV2(element.item.context), {parse_mode: 'MarkdownV2'})
 						}
 					}
 
 					return;
 				}
-
 
 				await bot.sendMessage(msg.chat.id, answer.err, {parse_mode: 'MarkdownV2'});
 			}
@@ -137,3 +175,14 @@ namespace TelegramBotProvider {
 }
 
 export default TelegramBotProvider;
+
+
+/*
+		bot.on('callback_query', async (msg) => {
+			reply_markup: {
+				inline_keyboard: [[{
+					text: 'Hello',
+					callback_data: 'ddsdsd'
+				}]]
+			}
+		});*/

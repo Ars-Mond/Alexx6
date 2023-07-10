@@ -4,10 +4,12 @@ namespace Storage {
 	export type ServerDataType = {
 		online: number,
 		maxOnline: number,
-		servers: Array<{
-			online: number,
-			maxOnline: number
-		}>,
+		servers: {
+			[key: string]: {
+				online: number,
+				maxOnline: number
+			}
+		},
 		version: string;
 	};
 	export const ServerData: Map<string, ServerDataType> = new Map();
